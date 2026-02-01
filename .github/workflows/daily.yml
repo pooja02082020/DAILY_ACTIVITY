@@ -22,17 +22,18 @@ jobs:
         run: |
           echo "Last update: $(date -u)" >> log.txt
 
-      - name: Commit & sync with remote
+      - name: Commit & push (with retry)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Pull latest remote changes FIRST
-          git pull --rebase origin main
-
-          # Now make commit
           git add .
           git commit -m "chore: daily auto update ($(date -u +'%Y-%m-%d'))" || echo "No changes to commit"
 
-          # Push safely
-          git push origin main
+          # Retry push in case remote changed
+          for i in 1 2 3; do
+            git pull --rebase origin main
+            git push origin main && break
+            echo "Push failed, retrying in 5s..."
+            sleep 5
+          done
