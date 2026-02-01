@@ -16,20 +16,23 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # important so rebase works
+          fetch-depth: 0
 
       - name: Update file
         run: |
           echo "Last update: $(date -u)" >> log.txt
 
-      - name: Commit & Push safely
+      - name: Commit & sync with remote
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+          # Pull latest remote changes FIRST
+          git pull --rebase origin main
+
+          # Now make commit
           git add .
           git commit -m "chore: daily auto update ($(date -u +'%Y-%m-%d'))" || echo "No changes to commit"
 
-          # ✅ bring remote changes first, then push
-          git pull --rebase origin main
+          # Push safely
           git push origin main
